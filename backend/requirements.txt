@@ -1,5 +1,6 @@
 fastapi
 uvicorn
+gunicorn
 sqlalchemy
 python-multipart
 pypdf
@@ -9,4 +10,3 @@ numpy
 requests
 python-dotenv
 pyjwt[crypto]
-gunicorn
