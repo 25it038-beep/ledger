@@ -39,6 +39,27 @@ app.add_middleware(
 init_db()
 
 
+@app.on_event("startup")
+def auto_seed_if_empty():
+    db = next(get_db())
+    try:
+        if db.query(Document).count() == 0:
+            print("[startup] Database is empty. Ingesting sample data...")
+            sample_dir = os.path.join(BASE_DIR, "sample_data")
+            if os.path.exists(sample_dir):
+                for filename in os.listdir(sample_dir):
+                    filepath = os.path.join(sample_dir, filename)
+                    if os.path.isfile(filepath) and not filename.startswith("."):
+                        try:
+                            doc = ingestion.ingest_file(filepath, db)
+                            categorize.categorize_document(doc, db)
+                            print(f"[startup] Seeded {filename} -> {doc.category}")
+                        except Exception as ex:
+                            print(f"[startup] Failed to seed {filename}: {ex}")
+    finally:
+        db.close()
+
+
 # ---------------------------------------------------------------- Clerk auth
 @app.middleware("http")
 async def clerk_auth_middleware(request: Request, call_next):
@@ -338,8 +359,6 @@ def _serialize_doc(doc: Document, include_text: bool = False) -> dict:
 # ---------------------------------------------------------------- Career Intelligence Engine
 @app.post("/api/career/analyze")
 def career_analyze(db: Session = Depends(get_db)):
-    if db.query(Document).count() == 0:
-        raise HTTPException(400, "Upload at least one document before running career analysis.")
     try:
         return career.run_career_analysis(db)
     except CareerEngineError as e:
