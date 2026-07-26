@@ -195,5 +195,7 @@ frontend/        Single-page vanilla JS/HTML/CSS UI
 sample_data/     5 sample documents to demo the full pipeline instantly
 requirements.txt
 ARCHITECTURE.md  Full architecture + data-flow diagram
-THOUGHT_PROCESS.md  Design reasoning, trade-offs, what was deprioritized and why
+
 ```
+Author:B.S.Harshan Seliyan
+
