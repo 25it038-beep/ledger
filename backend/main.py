@@ -187,42 +187,48 @@ async def upload_document(
     doc_date: str = Form(""),
     db: Session = Depends(get_db),
 ):
-    file_ext = os.path.splitext(file.filename)[1]
-    stored_name = f"{uuid.uuid4().hex}{file_ext}"
-    stored_path = os.path.join(UPLOAD_DIR, stored_name)
+    try:
+        os.makedirs(UPLOAD_DIR, exist_ok=True)
+        file_ext = os.path.splitext(file.filename)[1]
+        stored_name = f"{uuid.uuid4().hex}{file_ext}"
+        stored_path = os.path.join(UPLOAD_DIR, stored_name)
 
-    with open(stored_path, "wb") as out:
-        shutil.copyfileobj(file.file, out)
+        with open(stored_path, "wb") as out:
+            shutil.copyfileobj(file.file, out)
 
-    text = ingestion.extract_text(stored_path, file_ext)
-    category, _scores = categorize.categorize(text, file.filename)
-    skills_found = categorize.extract_skills(text, file.filename)
-    title = categorize.make_title(text, file.filename, category)
-    summary = categorize.make_summary(text, category, skills_found)
-    date_guess = doc_date.strip() or ingestion.guess_date(text, file.filename)
+        text = ingestion.extract_text(stored_path, file_ext)
+        category, _scores = categorize.categorize(text, file.filename)
+        skills_found = categorize.extract_skills(text, file.filename)
+        title = categorize.make_title(text, file.filename, category)
+        summary = categorize.make_summary(text, category, skills_found)
+        date_guess = doc_date.strip() or ingestion.guess_date(text, file.filename)
 
-    doc = Document(
-        filename=stored_name,
-        original_filename=file.filename,
-        filepath=stored_path,
-        file_ext=file_ext,
-        category=category,
-        title=title,
-        extracted_text=text,
-        doc_date=date_guess,
-        summary=summary,
-    )
-    db.add(doc)
-    db.flush()
-    for skill_name in skills_found:
-        doc.skills.append(_get_or_create_skill(db, skill_name))
+        doc = Document(
+            filename=stored_name,
+            original_filename=file.filename,
+            filepath=stored_path,
+            file_ext=file_ext,
+            category=category,
+            title=title,
+            extracted_text=text,
+            doc_date=date_guess,
+            summary=summary,
+        )
+        db.add(doc)
+        db.flush()
+        for skill_name in skills_found:
+            doc.skills.append(_get_or_create_skill(db, skill_name))
 
-    db.commit()
-    db.refresh(doc)
+        db.commit()
+        db.refresh(doc)
 
-    _refresh_derived_state(db)
+        _refresh_derived_state(db)
 
-    return _serialize_doc(doc)
+        return _serialize_doc(doc)
+    except Exception as e:
+        db.rollback()
+        print(f"[Upload Error] Failed to save {file.filename}: {e}")
+        raise HTTPException(500, f"Could not save file '{file.filename}': {str(e)}")
 
 
 @app.post("/api/upload-link")

@@ -199,12 +199,17 @@ async function handleFiles(fileList) {
     try {
       const res = await apiFetch(`${API}/upload`, { method: "POST", body: form });
       const data = await res.json();
-      line.innerHTML = `<span class="ok">&#10003;</span> ${file.name} &rarr; classified as <b>${data.category}</b>${data.skills.length ? " · " + data.skills.join(", ") : ""}`;
+      if (!res.ok) {
+        line.innerHTML = `<span style="color:var(--accent);">&#10007;</span> Failed: ${escapeHtml(file.name)} (${escapeHtml(data.detail || res.statusText)})`;
+        continue;
+      }
+      line.innerHTML = `<span class="ok">&#10003;</span> ${escapeHtml(file.name)} &rarr; classified as <b>${escapeHtml(data.category)}</b>${data.skills.length ? " · " + escapeHtml(data.skills.join(", ")) : ""}`;
     } catch (err) {
-      line.textContent = `Failed: ${file.name}`;
+      line.innerHTML = `<span style="color:var(--accent);">&#10007;</span> Failed: ${escapeHtml(file.name)} (${escapeHtml(err.message)})`;
     }
   }
   refreshTotal();
+  if (typeof loadDashboard === "function") loadDashboard();
 }
 
 document.getElementById("link-submit").addEventListener("click", async () => {
