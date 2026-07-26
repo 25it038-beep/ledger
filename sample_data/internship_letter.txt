@@ -1,0 +1,5 @@
+Offer Letter
+
+We are pleased to offer you the position of Machine Learning Intern at XYZ AI Labs.
+As part of this internship you will work on Python and TensorFlow based
+computer vision pipelines deployed on AWS. Start date: June 2025.

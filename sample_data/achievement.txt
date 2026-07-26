@@ -1,0 +1,4 @@
+Certificate of Achievement
+
+Awarded to Harshan for 1st place at the National AI Hackathon 2026,
+for a project built using Python, Machine Learning and AWS.

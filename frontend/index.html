@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ledger — Digital Identity System</title>
+<link rel="stylesheet" href="style.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,500;0,600;1,500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script id="clerk-script" crossorigin="anonymous"></script>
+</head>
+<body>
+
+<!-- Auth gate: shown until Clerk confirms a signed-in session -->
+<div id="auth-gate" class="auth-gate">
+  <div class="auth-card">
+    <h1 class="masthead-title">Ledger <span class="accent">of Record</span></h1>
+    <div class="masthead-sub" style="margin-bottom:22px;">Sign in to open your archive</div>
+    <div id="clerk-sign-in"></div>
+    <div id="auth-setup-hint" class="auth-setup-hint" style="display:none;">
+      Clerk isn't configured yet on the server. Add <code>CLERK_PUBLISHABLE_KEY</code> and
+      <code>CLERK_SECRET_KEY</code> to your <code>.env</code> file, restart the server, and reload this page.
+    </div>
+  </div>
+</div>
+
+<div class="app-shell" id="app-shell" style="display:none;">
+
+  <header class="masthead">
+    <div>
+      <h1 class="masthead-title">Ledger <span class="accent">of Record</span></h1>
+      <div class="masthead-sub">AI Digital Identity System — one archive, every credential connected</div>
+    </div>
+    <div class="header-right">
+      <div class="record-count"><b id="doc-total">0</b>documents on file</div>
+      <div class="user-badge" id="user-badge" style="display:none;">
+        <img id="user-avatar" class="user-avatar" src="" alt="" />
+        <div class="user-info">
+          <div id="user-name" class="user-name"></div>
+          <button id="sign-out-btn" class="sign-out-btn">Sign out</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button data-tab="upload" class="active">01 · Ingest</button>
+    <button data-tab="dashboard">02 · Archive</button>
+    <button data-tab="timeline">03 · Timeline</button>
+    <button data-tab="graph">04 · Connections</button>
+    <button data-tab="search">05 · Retrieve</button>
+    <button data-tab="career">06 · Career</button>
+  </nav>
+
+  <!-- MODULE 1: INGESTION -->
+  <section id="tab-upload" class="panel active">
+    <div class="upload-grid">
+      <div class="card">
+        <label class="field-label">Upload a file</label>
+        <div class="dropzone" id="dropzone">
+          <div class="glyph">&#8628;</div>
+          <div>Drop a certificate, resume, report, or letter here — or click to browse</div>
+          <div class="hint">PDF · DOCX · TXT — categorized and indexed automatically</div>
+        </div>
+        <input type="file" id="file-input" style="display:none" multiple />
+        <div class="field" style="margin-top:16px;">
+          <label class="field-label">Date on the document (optional — improves the timeline)</label>
+          <input type="text" id="upload-date" placeholder="e.g. 2024 or 2024-06" />
+        </div>
+        <div id="upload-log"></div>
+      </div>
+      <div class="card">
+        <label class="field-label">Or add a link (portfolio / GitHub)</label>
+        <div class="field" style="margin-top:10px;">
+          <input type="url" id="link-url" placeholder="https://github.com/you/project" />
+        </div>
+        <div class="field">
+          <label class="field-label">Label</label>
+          <input type="text" id="link-label" placeholder="e.g. AI/ML Project Portfolio" />
+        </div>
+        <div class="field">
+          <label class="field-label">Year</label>
+          <input type="text" id="link-date" placeholder="2026" />
+        </div>
+        <button class="primary" id="link-submit">Add link</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- MODULE 2: CATEGORIZED ARCHIVE -->
+  <section id="tab-dashboard" class="panel">
+    <div class="category-strip" id="category-strip"></div>
+    <div class="doc-grid" id="doc-grid"></div>
+  </section>
+
+  <!-- MODULE 4: TIMELINE -->
+  <section id="tab-timeline" class="panel">
+    <div class="timeline" id="timeline"></div>
+  </section>
+
+  <!-- MODULE 3: RELATIONSHIP GRAPH -->
+  <section id="tab-graph" class="panel">
+    <canvas id="graph-canvas"></canvas>
+    <div class="legend">
+      <span><span class="dot" style="background:#d9a441"></span>Document</span>
+      <span><span class="dot" style="background:#5b8cff"></span>Skill</span>
+    </div>
+  </section>
+
+  <!-- MODULE 5: SMART RETRIEVAL -->
+  <section id="tab-search" class="panel">
+    <div class="search-bar">
+      <input type="text" id="search-input" placeholder="Show my AI projects… show all certificates… latest resume…" />
+      <button class="primary" id="search-btn">Search</button>
+    </div>
+    <div id="search-results" class="card"></div>
+  </section>
+
+  <!-- CAREER INTELLIGENCE ENGINE -->
+  <section id="tab-career" class="panel">
+    <div class="career-toolbar">
+      <button class="primary" id="career-run-btn">Run career analysis</button>
+      <span id="career-meta" class="career-meta"></span>
+    </div>
+    <div id="career-empty" class="empty-state">No career analysis yet — click "Run career analysis" above. This calls your configured LLM to read your whole archive and generate real, personalized guidance (requires ANTHROPIC_API_KEY to be set on the server).</div>
+    <div id="career-content" style="display:none;">
+
+      <div class="card career-score-card">
+        <div class="score-block">
+          <div class="score-num" id="score-readiness">--</div>
+          <div class="score-label">Career Readiness</div>
+        </div>
+        <div class="score-block">
+          <div class="score-num" id="score-resume">--</div>
+          <div class="score-label">Resume (ATS)</div>
+        </div>
+        <div class="score-block">
+          <div class="score-num" id="score-portfolio">--</div>
+          <div class="score-label">Portfolio</div>
+        </div>
+      </div>
+
+      <h3 class="section-head">Career Matches</h3>
+      <div id="career-matches" class="career-matches"></div>
+
+      <h3 class="section-head">Skill Gap</h3>
+      <div class="card" id="skill-gap"></div>
+
+      <h3 class="section-head">Resume Review</h3>
+      <div class="card" id="resume-review"></div>
+
+      <h3 class="section-head">Future Timeline</h3>
+      <div class="timeline" id="career-timeline"></div>
+
+      <h3 class="section-head">AI Insights</h3>
+      <div class="card" id="career-insights"></div>
+
+      <h3 class="section-head">Match a Job Description</h3>
+      <div class="card">
+        <textarea id="job-desc-input" placeholder="Paste a job description here…" rows="5"></textarea>
+        <button class="primary" id="job-match-btn" style="margin-top:10px;">Check match</button>
+        <div id="job-match-result" style="margin-top:16px;"></div>
+      </div>
+
+      <h3 class="section-head">Career Copilot</h3>
+      <div class="card">
+        <div id="copilot-log" class="copilot-log"></div>
+        <div class="search-bar" style="margin-top:12px;">
+          <input type="text" id="copilot-input" placeholder="What career suits me best? What should I learn next?" />
+          <button class="primary" id="copilot-send">Ask</button>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+</div>
+<script src="app.js"></script>
+<footer>@Harshan Seliyan.B.S</footer>
+</body>
+</html>

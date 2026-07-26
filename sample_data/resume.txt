@@ -1,0 +1,5 @@
+Harshan
+Career Objective: Software engineer passionate about AI and cybersecurity.
+Education: B.Tech Computer Science, CGPA 8.9
+Work Experience: Backend developer intern, built REST APIs using Python and Django.
+Skills: Python, Machine Learning, AWS, Docker, Git

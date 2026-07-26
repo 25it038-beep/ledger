@@ -1,0 +1,6 @@
+Project Report
+
+Project Title: AI-Powered Crop Disease Detector
+Abstract: This project uses deep learning and computer vision to detect crop disease
+from leaf images. Built with Python, TensorFlow and deployed on AWS. 2024.
+GitHub: github.com/harshan/crop-disease-detector

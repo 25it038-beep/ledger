@@ -1,0 +1,5 @@
+Coursera Certificate of Completion
+
+This is to certify that Harshan has successfully completed the course
+"Python for Everybody" with distinction, 2023.
+Skills covered: Python, Data Analysis, SQL.
